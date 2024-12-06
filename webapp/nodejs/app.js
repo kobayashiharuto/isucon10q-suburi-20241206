@@ -588,23 +588,35 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
   const getConnection = promisify(db.getConnection.bind(db));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
+  
   try {
+    // 椅子データを取得
     const [chair] = await query("SELECT * FROM chair WHERE id = ?", [id]);
     const w = chair.width;
     const h = chair.height;
     const d = chair.depth;
-    const es = await query(
-      "SELECT * FROM estate where (door_width >= ? AND door_height>= ?) OR (door_width >= ? AND door_height>= ?) OR (door_width >= ? AND door_height>=?) OR (door_width >= ? AND door_height>=?) OR (door_width >= ? AND door_height>=?) OR (door_width >= ? AND door_height>=?) ORDER BY popularity DESC, id ASC LIMIT ?",
-      [w, h, w, d, h, w, h, d, d, w, d, h, LIMIT]
+
+    // 椅子が通過できる最低条件を満たす物件を検索
+    const estates = await query(
+      `
+      SELECT * 
+      FROM estate 
+      WHERE (door_width >= ? AND door_height >= ?) 
+         OR (door_width >= ? AND door_height >= ?) 
+      ORDER BY popularity DESC, id ASC 
+      LIMIT ?
+      `,
+      [w, h, d, h, 10] // 10 は取得件数の例
     );
-    const estates = es.map((estate) => camelcaseKeys(estate));
-    res.json({ estates });
+
+    res.json({ estates: estates.map(camelcaseKeys) });
   } catch (e) {
     next(e);
   } finally {
     await connection.release();
   }
 });
+
 
 app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
   const getConnection = promisify(db.getConnection.bind(db));
