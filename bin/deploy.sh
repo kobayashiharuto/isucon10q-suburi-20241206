@@ -2,6 +2,7 @@
 
 # 移動とGit更新
 cd /home/isucon/isucon10q-suburi-20241206/webapp/nodejs
+git reset --hard
 git pull
 
 # Git情報を取得
