@@ -1,5 +1,14 @@
 "use strict";
 
+import tracer from "dd-trace";
+
+tracer.init({
+    logInjection: true,
+    runtimeMetrics: true,
+    profiling: true,
+    service: 'isuumo',
+});
+
 const express = require("express");
 const morgan = require("morgan");
 const multer = require("multer");
