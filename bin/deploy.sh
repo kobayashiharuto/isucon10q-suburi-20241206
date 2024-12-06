@@ -14,7 +14,7 @@ export DD_GIT_REPOSITORY_URL="$REPO_URL"
 
 # /home/isucon/env.sh を生成
 cat <<EOF > /home/isucon/env.sh
-MYSQL_HOST=" 172.31.35.57"
+MYSQL_HOST="172.31.35.57"
 MYSQL_PORT=3306
 MYSQL_USER=isucon
 MYSQL_DBNAME=isuumo
