@@ -9,6 +9,9 @@ tracer.init({
     service: 'isuumo',
 });
 
+const NodeCache = require("node-cache");
+const cache = new NodeCache({ stdTTL: 60 }); // TTL: 60秒
+
 const express = require("express");
 const morgan = require("morgan");
 const multer = require("multer");
@@ -66,15 +69,28 @@ app.post("/initialize", async (req, res, next) => {
 });
 
 app.get("/api/estate/low_priced", async (req, res, next) => {
+  const cacheKey = "low_priced_estate";
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    // キャッシュが存在する場合
+    return res.json({ estates: cachedData });
+  }
+
   const getConnection = promisify(db.getConnection.bind(db));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
+
   try {
     const es = await query(
       "SELECT * FROM estate ORDER BY rent ASC, id ASC LIMIT ?",
       [LIMIT]
     );
     const estates = es.map((estate) => camelcaseKeys(estate));
+
+    // キャッシュに保存
+    cache.set(cacheKey, estates);
+
     res.json({ estates });
   } catch (e) {
     next(e);
@@ -84,15 +100,28 @@ app.get("/api/estate/low_priced", async (req, res, next) => {
 });
 
 app.get("/api/chair/low_priced", async (req, res, next) => {
+  const cacheKey = "low_priced_chair";
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    // キャッシュが存在する場合
+    return res.json({ chairs: cachedData });
+  }
+
   const getConnection = promisify(db.getConnection.bind(db));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
+
   try {
     const cs = await query(
       "SELECT * FROM chair WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT ?",
       [LIMIT]
     );
     const chairs = cs.map((chair) => camelcaseKeys(chair));
+
+    // キャッシュに保存
+    cache.set(cacheKey, chairs);
+
     res.json({ chairs });
   } catch (e) {
     next(e);
@@ -100,6 +129,7 @@ app.get("/api/chair/low_priced", async (req, res, next) => {
     await connection.release();
   }
 });
+
 
 app.get("/api/chair/search", async (req, res, next) => {
   const searchQueries = [];
@@ -583,6 +613,7 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
   const query = promisify(connection.query.bind(connection));
   const commit = promisify(connection.commit.bind(connection));
   const rollback = promisify(connection.rollback.bind(connection));
+
   try {
     await beginTransaction();
     const csv = parse(req.file.buffer, { skip_empty_line: true });
@@ -594,6 +625,10 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
       );
     }
     await commit();
+
+    // キャッシュをクリア
+    cache.del("low_priced_chair");
+
     res.status(201);
     res.json({ ok: true });
   } catch (e) {
@@ -611,6 +646,7 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
   const query = promisify(connection.query.bind(connection));
   const commit = promisify(connection.commit.bind(connection));
   const rollback = promisify(connection.rollback.bind(connection));
+
   try {
     await beginTransaction();
     const csv = parse(req.file.buffer, { skip_empty_line: true });
@@ -622,6 +658,10 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
       );
     }
     await commit();
+
+    // キャッシュをクリア
+    cache.del("low_priced_estate");
+
     res.status(201);
     res.json({ ok: true });
   } catch (e) {
