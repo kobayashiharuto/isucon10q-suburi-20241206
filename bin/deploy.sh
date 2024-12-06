@@ -29,7 +29,6 @@ chmod 644 /home/isucon/env.sh
 
 # npmでアプリケーションをビルド
 npm install
-npm run build
 
 # systemctlをリロードしてサービスを再起動
 sudo systemctl daemon-reload
