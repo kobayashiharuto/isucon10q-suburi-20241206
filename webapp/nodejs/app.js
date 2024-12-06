@@ -1,6 +1,6 @@
 "use strict";
 
-const tracer = require('dd-trace').init();
+const tracer = require('dd-trace');
 
 tracer.init({
     logInjection: true,
