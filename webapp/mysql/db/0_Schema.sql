@@ -37,7 +37,7 @@ CREATE TABLE isuumo.chair
     features    VARCHAR(64)     NOT NULL,
     kind        VARCHAR(64)     NOT NULL,
     popularity  INTEGER         NOT NULL,
-    stock       INTEGER         NOT NULL
+    stock       INTEGER         NOT NULL,
     sort_key BIGINT GENERATED ALWAYS AS (popularity * 1000000 + (999999 - id)) STORED NOT NULL,
     INDEX idx_sort_key (sort_key)
 );
