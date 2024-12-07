@@ -19,7 +19,9 @@ CREATE TABLE isuumo.estate
     features    VARCHAR(64)         NOT NULL,
     popularity  INTEGER             NOT NULL,
     location    POINT GENERATED ALWAYS AS (Point(longitude, latitude)) STORED NOT NULL,
+    sort_key BIGINT GENERATED ALWAYS AS (popularity * 1000000 + (999999 - id)) STORED NOT NULL,
     INDEX idx_popularity (popularity),
+    INDEX idx_sort_key (sort_key),
     SPATIAL INDEX idx_location (location)
 );
 

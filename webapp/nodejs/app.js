@@ -277,7 +277,7 @@ app.get("/api/chair/search", async (req, res, next) => {
 
   const sqlprefix = "SELECT * FROM chair WHERE ";
   const searchCondition = searchQueries.join(" AND ");
-  const limitOffset = " ORDER BY popularity DESC, id ASC LIMIT ? OFFSET ?";
+  const limitOffset = " ORDER BY sort_key LIMIT ? OFFSET ?";
   const countprefix = "SELECT COUNT(*) as count FROM chair WHERE ";
 
   const getConnection = promisify(db.getConnection.bind(db));
@@ -458,7 +458,7 @@ app.get("/api/estate/search", cacheMiddleware, async (req, res, next) => {
 
   const sqlprefix = "SELECT * FROM estate WHERE ";
   const searchCondition = searchQueries.join(" AND ");
-  const limitOffset = " ORDER BY popularity DESC, id ASC LIMIT ? OFFSET ?";
+  const limitOffset = " ORDER BY sort_key LIMIT ? OFFSET ?";
   const countprefix = "SELECT COUNT(*) as count FROM estate WHERE ";
 
   const getConnection = promisify(db.getConnection.bind(db));
@@ -540,7 +540,7 @@ app.post("/api/estate/nazotte", async (req, res, next) => {
         ST_PolygonFromText(?),
         location
       )
-      ORDER BY popularity DESC, id ASC
+      ORDER BY sort_key
       LIMIT ?
     `;
 
