@@ -624,6 +624,7 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
     next(e);
   } finally {
     await connection.release();
+    await chairConnection.release();
   }
 });
 
