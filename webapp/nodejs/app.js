@@ -46,6 +46,7 @@ const promisify = util.promisify;
 const exec = promisify(cp.exec);
 const chairSearchCondition = require("../fixture/chair_condition.json");
 const estateSearchCondition = require("../fixture/estate_condition.json");
+const e = require('express');
 
 const PORT = process.env.PORT ?? 1323;
 const LIMIT = 20;
@@ -71,8 +72,8 @@ const dbChairInfo = {
 
 const app = express();
 
-const estateDB = mysql.createPool(dbEstateInfo);
 const chairDB = mysql.createPool(dbChairInfo);
+const estateDB = mysql.createPool(dbEstateInfo);
 
 app.set("db", chairDB);
 
@@ -88,20 +89,23 @@ app.post("/initialize", async (req, res, next) => {
     ];
     const execfilesChair = dbChairfiles.map((file) => path.join(dbdir, file));
     for (const execfile of execfilesChair) {
+      exec_a = `mysql -h ${dbChairInfo.host} -u ${dbChairInfo.user} -p${dbChairInfo.password} -P ${dbChairInfo.port} ${dbChairInfo.database} < ${execfile}`
+      console.log(exec_a)
       await exec(
-        `mysql -h ${dbChairInfo.host} -u ${dbChairInfo.user} -p${dbChairInfo.password} -P ${dbChairInfo.port} ${dbChairInfo.database} < ${execfile}`
+        exec_a
       );
     }
 
     const dbEstatefiles = [
       "0_Schema_estate.sql",
-      "2_DummyChairData.sql",
       "1_DummyEstateData.sql",
     ];
     const execfilesEstate = dbEstatefiles.map((file) => path.join(dbdir, file));
     for (const execfile of execfilesEstate) {
+      exec_a = `mysql -h ${dbEstateInfo.host} -u ${dbEstateInfo.user} -p${dbEstateInfo.password} -P ${dbEstateInfo.port} ${dbEstateInfo.database} < ${execfile}`
+      console.log(exec_a)
       await exec(
-        `mysql -h ${dbEstateInfo.host} -u ${dbEstateInfo.user} -p${dbEstateInfo.password} -P ${dbEstateInfo.port} ${dbEstateInfo.database} < ${execfile}`
+        exec_a
       );
     }
 
