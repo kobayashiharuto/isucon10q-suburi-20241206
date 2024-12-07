@@ -150,7 +150,7 @@ app.get("/api/chair/low_priced", async (req, res, next) => {
 });
 
 
-app.get("/api/chair/search", cacheMiddleware, async (req, res, next) => {
+app.get("/api/chair/search", async (req, res, next) => {
   const searchQueries = [];
   const queryParams = [];
   const {
