@@ -95,6 +95,7 @@ app.post("/initialize", async (req, res, next) => {
 
     const dbEstatefiles = [
       "0_Schema_estate.sql",
+      "2_DummyChairData.sql",
       "1_DummyEstateData.sql",
     ];
     const execfilesEstate = dbEstatefiles.map((file) => path.join(dbdir, file));
