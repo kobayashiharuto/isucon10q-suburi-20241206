@@ -634,6 +634,7 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
 
 
 app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
+  console.log("post chairQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   const getConnection = promisify(chairDB.getConnection.bind(chairDB));
   const connection = await getConnection();
   const beginTransaction = promisify(connection.beginTransaction.bind(connection));
