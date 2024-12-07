@@ -664,6 +664,7 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
     next(e);
   } finally {
     await connection.release();
+    console.log("DONE: post chairQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   }
 });
 
