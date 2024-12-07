@@ -669,6 +669,7 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
 });
 
 app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
+  console.log("post estateQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   const getConnection = promisify(estateDB.getConnection.bind(estateDB));
   const connection = await getConnection();
   const beginTransaction = promisify(connection.beginTransaction.bind(connection));
@@ -698,6 +699,7 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
     next(e);
   } finally {
     await connection.release();
+    console.log("DONE: post estateQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   }
 });
 
