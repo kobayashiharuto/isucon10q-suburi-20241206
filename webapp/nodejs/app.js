@@ -631,6 +631,7 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
 
 
 
+
 app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
   const getConnection = promisify(chairDB.getConnection.bind(chairDB));
   const connection = await getConnection();
@@ -642,20 +643,26 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
   try {
     await beginTransaction();
     const csv = parse(req.file.buffer, { skip_empty_line: true });
-    for (var i = 0; i < csv.length; i++) {
-      const items = csv[i];
-      await query(
-        "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        items
-      );
-    }
+    
+    // バルクインサート用のデータ構築
+    const values = csv.map(items => [
+      items[0], items[1], items[2], items[3], items[4],
+      items[5], items[6], items[7], items[8], items[9],
+      items[10], items[11], items[12]
+    ]);
+
+    // バルクインサートクエリ
+    await query(
+      "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock) VALUES ?",
+      [values]
+    );
+
     await commit();
 
     // キャッシュをクリア
     cache.flushAll();
 
-    res.status(201);
-    res.json({ ok: true });
+    res.status(201).json({ ok: true });
   } catch (e) {
     await rollback();
     next(e);
@@ -675,20 +682,26 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
   try {
     await beginTransaction();
     const csv = parse(req.file.buffer, { skip_empty_line: true });
-    for (var i = 0; i < csv.length; i++) {
-      const items = csv[i];
-      await query(
-        "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-        items
-      );
-    }
+
+    // バルクインサート用のデータ構築
+    const values = csv.map(items => [
+      items[0], items[1], items[2], items[3], items[4],
+      items[5], items[6], items[7], items[8], items[9],
+      items[10], items[11]
+    ]);
+
+    // バルクインサートクエリ
+    await query(
+      "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity) VALUES ?",
+      [values]
+    );
+
     await commit();
 
     // キャッシュをクリア
     cache.flushAll();
 
-    res.status(201);
-    res.json({ ok: true });
+    res.status(201).json({ ok: true });
   } catch (e) {
     await rollback();
     next(e);
