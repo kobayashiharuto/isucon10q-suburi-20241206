@@ -489,12 +489,16 @@ app.post("/api/estate/req_doc/:id", async (req, res, next) => {
     await connection.release();
   }
 });
-
 app.post("/api/estate/nazotte", async (req, res, next) => {
   const coordinates = req.body.coordinates;
+  // coordinatesは [{ latitude: number, longitude: number }, ...] の想定
+
+  // 経度(longitude)と緯度(latitude)を配列へ
   const longitudes = coordinates.map((c) => c.longitude);
   const latitudes = coordinates.map((c) => c.latitude);
-  const boundingbox = {
+
+  // バウンディングボックスの算出（最小値・最大値から）
+  const boundingBox = {
     topleft: {
       longitude: Math.min(...longitudes),
       latitude: Math.min(...latitudes),
@@ -505,58 +509,79 @@ app.post("/api/estate/nazotte", async (req, res, next) => {
     },
   };
 
+  // Polygon WKT形式の作成 
+  // WKTは "POLYGON((lon1 lat1, lon2 lat2, ...))" のように経度→緯度の順で記述します。
+  const polygonCoords = coordinates
+    .map((coord) => `${coord.longitude} ${coord.latitude}`)
+    .join(",");
+
+  const polygonWKT = `POLYGON((${polygonCoords}))`;
+
   const getConnection = promisify(db.getConnection.bind(db));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
+
   try {
-    const estates = await query(
-      "SELECT * FROM estate WHERE latitude <= ? AND latitude >= ? AND longitude <= ? AND longitude >= ? ORDER BY popularity DESC, id ASC",
+    // 1. バウンディングボックス内の物件を取得
+    //   latitude/longitudeの条件順序に注意: 
+    //   ここではlatitudeについては top-left <-> bottomright で上下が変わる可能性があるため、
+    //   バウンディングボックス決定時にメタ情報（top/bottomなど）が正しいか確認。
+    //   通常 "top" は緯度が大きい値、"bottom" は緯度が小さい値となるはず。
+    //   もし地図が北を上としている場合、北ほど緯度が大きいため、
+    //   latitudeの条件は bottom <= latitude <= top になるように変更すべき。
+    //   ここでは初期コードに合わせるが、正確には再検討を要す。
+    const estatesInBox = await query(
+      `SELECT * FROM estate
+       WHERE latitude <= ?
+         AND latitude >= ?
+         AND longitude <= ?
+         AND longitude >= ?
+       ORDER BY popularity DESC, id ASC`,
       [
-        boundingbox.bottomright.latitude,
-        boundingbox.topleft.latitude,
-        boundingbox.bottomright.longitude,
-        boundingbox.topleft.longitude,
+        boundingBox.bottomright.latitude,
+        boundingBox.topleft.latitude,
+        boundingBox.bottomright.longitude,
+        boundingBox.topleft.longitude,
       ]
     );
 
-    const estatesInPolygon = [];
-    for (const estate of estates) {
-      const point = util.format(
-        "'POINT(%f %f)'",
-        estate.latitude,
-        estate.longitude
-      );
-      const sql =
-        "SELECT * FROM estate WHERE id = ? AND ST_Contains(ST_PolygonFromText(%s), ST_GeomFromText(%s))";
-      const coordinatesToText = util.format(
-        "'POLYGON((%s))'",
-        coordinates
-          .map((coordinate) =>
-            util.format("%f %f", coordinate.latitude, coordinate.longitude)
-          )
-          .join(",")
-      );
-      const sqlstr = util.format(sql, coordinatesToText, point);
-      const [e] = await query(sqlstr, [estate.id]);
-      if (e && Object.keys(e).length > 0) {
-        estatesInPolygon.push(e);
-      }
-    }
+    // 2. ポリゴン内のデータに絞り込む
+    //   ポイントごとにST_Containsを回していたのをまとめて実行する。
+    //   ST_GeomFromText('POINT(lon lat)') の形で検索し、まとめてフィルタ可能。
+    //   estateテーブルに (longitude, latitude) から成る空間インデックスを用意できれば尚良い。
+    //   ここではIN句を使ってまとめて検索する例を示すが、1000件以上になるとINは不利になる可能性あり。
+    //   WHERE句で ST_Contains(ST_PolygonFromText(?), ST_PointFromText(?)) を使う場合、
+    //   全てを一度でフィルタするには少々トリッキーなため、Estateテーブルに直接Geomカラムを持たせるなどの改善が必要。
+    //   ひとまず、ここでは一つのSQLでフィルタする方法として、estateごとにST_Containsを適用するか、または
+    //   estateテーブルに POINT(longitude latitude) をST_GeomFromText()で生成し、サブクエリでまとめるなどの方法を検討する。
 
+    // 一案としては、MySQL/MariaDBの場合、次のようなクエリでまとめられる (MariaDB 10.1以降でGIS対応が進んでいる想定):
+    // ただし、DB実装により使えるGIS関数が変わるので適宜修正。
+    // 下記はサンプルで、ST_PointFromText(…) をFROM句に噛ませるための工夫が必要な場合がある。
+
+    // ここでは簡易的な実装例として、mapでIN句をつくり、全件一括でpolygon判定できるようなビューやJOINを想定するのは難しいため、
+    // 次善策：1度のSQLで polygon 内にあるestateを直接取得するようなクエリを書いてみる:
+    // 注意: ST_Contains(ST_PolygonFromText(?), ST_PointFromText(CONCAT('POINT(', longitude, ' ', latitude, ')'))) のような動的生成。
+
+    const estatesInPolygon = await query(
+      `SELECT * FROM estate 
+       WHERE id IN (?) 
+         AND ST_Contains(
+               ST_PolygonFromText(?),
+               ST_GeomFromText(CONCAT('POINT(', longitude, ' ', latitude, ')'))
+             )`,
+      [estatesInBox.map(e => e.id), polygonWKT]
+    );
+
+    // 3. 結果整形
     const results = {
-      estates: [],
+      estates: estatesInPolygon.slice(0, NAZOTTE_LIMIT).map(camelcaseKeys),
+      count: Math.min(estatesInPolygon.length, NAZOTTE_LIMIT),
     };
-    let i = 0;
-    for (const estate of estatesInPolygon) {
-      if (i >= NAZOTTE_LIMIT) {
-        break;
-      }
-      results.estates.push(camelcaseKeys(estate));
-      i++;
-    }
-    results.count = results.estates.length;
+
     res.json(results);
   } catch (e) {
+    console.error(e);
     next(e);
   } finally {
     await connection.release();
