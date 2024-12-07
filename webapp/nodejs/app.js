@@ -696,6 +696,7 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
     res.json({ ok: true });
   } catch (e) {
     await rollback();
+    console.log('ERROR: QQQQQQQQQQQQQQQQ' + e)
     next(e);
   } finally {
     await connection.release();
