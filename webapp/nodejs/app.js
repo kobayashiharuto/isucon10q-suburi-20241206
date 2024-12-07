@@ -89,7 +89,7 @@ app.post("/initialize", async (req, res, next) => {
     ];
     const execfilesChair = dbChairfiles.map((file) => path.join(dbdir, file));
     for (const execfile of execfilesChair) {
-      const exec_a = `mysql -h ${dbChairInfo.host} -u ${dbChairInfo.user} -p${dbChairInfo.password} -P ${dbChairInfo.port} ${dbChairInfo.database} < ${execfile}`
+      const exec_a = `mysql -h ${dbChairInfo.host} -u ${dbChairInfo.user} -p ${dbChairInfo.password} -P ${dbChairInfo.port} ${dbChairInfo.database} < ${execfile}`
       console.log(exec_a)
       await exec(
         exec_a
@@ -102,7 +102,7 @@ app.post("/initialize", async (req, res, next) => {
     ];
     const execfilesEstate = dbEstatefiles.map((file) => path.join(dbdir, file));
     for (const execfile of execfilesEstate) {
-      const exec_a = `mysql -h ${dbEstateInfo.host} -u ${dbEstateInfo.user} -p${dbEstateInfo.password} -P ${dbEstateInfo.port} ${dbEstateInfo.database} < ${execfile}`
+      const exec_a = `mysql -h ${dbEstateInfo.host} -u ${dbEstateInfo.user} -p ${dbEstateInfo.password} -P ${dbEstateInfo.port} ${dbEstateInfo.database} < ${execfile}`
       console.log(exec_a)
       await exec(
         exec_a
