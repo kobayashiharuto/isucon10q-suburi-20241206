@@ -602,7 +602,7 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
       WHERE 
         (door_width >= ? AND door_height >= ?) OR 
         (door_width >= ? AND door_height >= ?)
-      ORDER BY popularity DESC, id ASC 
+      ORDER BY popularity DESC
       LIMIT ?`,
       [min1, min2, min2, min1, LIMIT]
     );
