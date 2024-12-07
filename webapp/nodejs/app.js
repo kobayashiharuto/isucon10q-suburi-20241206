@@ -12,6 +12,25 @@ tracer.init({
 const NodeCache = require("node-cache");
 const cache = new NodeCache({ stdTTL: 60 }); // TTL: 60秒
 
+// キャッシュミドルウェア
+const cacheMiddleware = (req, res, next) => {
+  const cacheKey = `${req.path}?${JSON.stringify(req.query)}`;
+  const cachedResponse = cache.get(cacheKey);
+  
+  if (cachedResponse) {
+    return res.json(cachedResponse); // キャッシュから返却
+  }
+
+  res.sendResponse = res.json; // 元の res.json を保存
+  res.json = (body) => {
+    cache.set(cacheKey, body); // キャッシュに保存
+    res.sendResponse(body); // 元のレスポンスを送信
+  };
+
+  next();
+};
+
+
 const express = require("express");
 const morgan = require("morgan");
 const multer = require("multer");
@@ -343,7 +362,7 @@ app.post("/api/chair/buy/:id", async (req, res, next) => {
   }
 });
 
-app.get("/api/estate/search", async (req, res, next) => {
+app.get("/api/estate/search", cacheMiddleware, async (req, res, next) => {
   const searchQueries = [];
   const queryParams = [];
   const {
@@ -619,7 +638,7 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
     await commit();
 
     // キャッシュをクリア
-    cache.del("low_priced_chair");
+    cache.flushAll();
 
     res.status(201);
     res.json({ ok: true });
@@ -652,7 +671,7 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
     await commit();
 
     // キャッシュをクリア
-    cache.del("low_priced_estate");
+    cache.flushAll();
 
     res.status(201);
     res.json({ ok: true });
