@@ -489,28 +489,22 @@ app.post("/api/estate/req_doc/:id", async (req, res, next) => {
     await connection.release();
   }
 });
-
 app.post("/api/estate/nazotte", async (req, res, next) => {
   const coordinates = req.body.coordinates; // {latitude, longitude} の配列
-  const longitudes = coordinates.map(c => c.longitude);
-  const latitudes = coordinates.map(c => c.latitude);
-  
-  const boundingBox = {
-    topleft: {
-      longitude: Math.min(...longitudes),
-      latitude: Math.min(...latitudes),
-    },
-    bottomright: {
-      longitude: Math.max(...longitudes),
-      latitude: Math.max(...latitudes),
-    },
-  };
 
-  // POLYGON WKT 生成
-  // 注意: 一般的なWKTの座標順序は "longitude latitude"
-  // coordinatesが {latitude, longitude} なら注意して順番を変える必要がある。
-  // POLYGON((x1 y1,x2 y2,x3 y3,...,x1 y1)) の形式
-  const polygonCoords = coordinates.map(c => `${c.longitude} ${c.latitude}`).join(',');
+  // ポリゴンWKTの生成
+  // POLYGON((x1 y1,x2 y2,...,xN yN,x1 y1)) で閉じる必要がある
+  // フロント側で閉じたポリゴンを渡していると仮定し、ここではそのまま使用
+  let polygonCoords = coordinates.map(c => `${c.longitude} ${c.latitude}`).join(',');
+
+  // coordinatesが閉じていない場合は、以下のような処理で始点を終点として追加
+  // if (
+  //   coordinates[0].longitude !== coordinates[coordinates.length - 1].longitude ||
+  //   coordinates[0].latitude !== coordinates[coordinates.length - 1].latitude
+  // ) {
+  //   polygonCoords += `,${coordinates[0].longitude} ${coordinates[0].latitude}`;
+  // }
+
   const polygonWKT = `POLYGON((${polygonCoords}))`;
 
   const getConnection = promisify(db.getConnection.bind(db));
@@ -518,28 +512,20 @@ app.post("/api/estate/nazotte", async (req, res, next) => {
   const query = promisify(connection.query.bind(connection));
   
   try {
-    // 一度に多角形内のestateを取得するクエリ
-    // boundingBoxで一次的な絞り込みをした上で、ポリゴン内部判定を行う。
+    // locationカラムはPOINT型で、SPATIAL INDEXが貼られているため
+    // ST_Containsで直接空間検索可能
     const sql = `
-      SELECT * FROM estate
-      WHERE longitude >= ? AND longitude <= ?
-        AND latitude >= ? AND latitude <= ?
-        AND ST_Contains(
-          ST_PolygonFromText(?),
-          ST_GeomFromText(CONCAT('POINT(', longitude, ' ', latitude, ')'))
-        )
+      SELECT *
+      FROM estate
+      WHERE ST_Contains(
+        ST_PolygonFromText(?),
+        location
+      )
       ORDER BY popularity DESC, id ASC
       LIMIT ?
     `;
 
-    const estatesInPolygon = await query(sql, [
-      boundingBox.topleft.longitude,
-      boundingBox.bottomright.longitude,
-      boundingBox.topleft.latitude,
-      boundingBox.bottomright.latitude,
-      polygonWKT,
-      NAZOTTE_LIMIT
-    ]);
+    const estatesInPolygon = await query(sql, [polygonWKT, NAZOTTE_LIMIT]);
 
     const results = {
       estates: estatesInPolygon.map(e => camelcaseKeys(e)),
@@ -553,7 +539,6 @@ app.post("/api/estate/nazotte", async (req, res, next) => {
     await connection.release();
   }
 });
-
 
 app.get("/api/estate/:id", async (req, res, next) => {
   const getConnection = promisify(db.getConnection.bind(db));

@@ -18,7 +18,11 @@ CREATE TABLE isuumo.estate
     door_width  INTEGER             NOT NULL,
     features    VARCHAR(64)         NOT NULL,
     popularity  INTEGER             NOT NULL,
-    INDEX idx_popularity (popularity)
+    location    POINT GENERATED ALWAYS AS (
+        ST_PointFromText(CONCAT('POINT(', longitude, ' ', latitude, ')'))
+    ) STORED,
+    INDEX idx_popularity (popularity),
+    SPATIAL INDEX idx_location (location)
 );
 
 CREATE TABLE isuumo.chair
