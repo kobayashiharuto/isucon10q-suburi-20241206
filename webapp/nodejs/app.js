@@ -59,7 +59,7 @@ const dbEstateInfo = {
   user: process.env.MYSQL_ESTATE_USER ?? "isucon",
   password: process.env.MYSQL_ESTATE_PASS ?? "isucon",
   database: process.env.MYSQL_ESTATE_DBNAME ?? "isuumo",
-  connectionLimit: 20,
+  connectionLimit: 10,
 };
 
 const dbChairInfo = {
@@ -68,7 +68,7 @@ const dbChairInfo = {
   user: process.env.MYSQL_CHAIR_USER ?? "isucon",
   password: process.env.MYSQL_CHAIR_PASS ?? "isucon",
   database: process.env.MYSQL_CHAIR_DBNAME ?? "isuumo",
-  connectionLimit: 20,
+  connectionLimit: 10,
 };
 
 const app = express();
