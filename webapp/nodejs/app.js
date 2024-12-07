@@ -614,9 +614,14 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
   const getConnection = promisify(estateDB.getConnection.bind(estateDB));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
+
+  const getChairConnection = promisify(chairDB.getConnection.bind(chairDB));
+  const chairConnection = await getChairConnection();
+  const chairQuery = promisify(chairConnection.query.bind(connection));
+  
   try {
     // 椅子情報を取得
-    const [chair] = await query("SELECT * FROM chair WHERE id = ?", [id]);
+    const [chair] = await chairQuery("SELECT * FROM chair WHERE id = ?", [id]);
     const dimensions = [chair.width, chair.height, chair.depth].sort((a, b) => a - b); // 小さい順にソート
     const min1 = dimensions[0]; // 最小値
     const min2 = dimensions[1]; // 2番目に小さい値
