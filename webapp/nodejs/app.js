@@ -117,14 +117,6 @@ app.post("/initialize", async (req, res, next) => {
 });
 
 app.get("/api/estate/low_priced", async (req, res, next) => {
-  const cacheKey = "low_priced_estate";
-  const cachedData = cache.get(cacheKey);
-
-  if (cachedData) {
-    // キャッシュが存在する場合
-    return res.json({ estates: cachedData });
-  }
-
   const getConnection = promisify(estateDB.getConnection.bind(estateDB));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
@@ -136,9 +128,6 @@ app.get("/api/estate/low_priced", async (req, res, next) => {
     );
     const estates = es.map((estate) => camelcaseKeys(estate));
 
-    // キャッシュに保存
-    cache.set(cacheKey, estates);
-
     res.json({ estates });
   } catch (e) {
     next(e);
@@ -148,13 +137,6 @@ app.get("/api/estate/low_priced", async (req, res, next) => {
 });
 
 app.get("/api/chair/low_priced", async (req, res, next) => {
-  const cacheKey = "low_priced_chair";
-  const cachedData = cache.get(cacheKey);
-
-  // if (cachedData) {
-  //   // キャッシュが存在する場合
-  //   return res.json({ chairs: cachedData });
-  // }
 
   const getConnection = promisify(chairDB.getConnection.bind(chairDB));
   const connection = await getConnection();
@@ -166,9 +148,6 @@ app.get("/api/chair/low_priced", async (req, res, next) => {
       [LIMIT]
     );
     const chairs = cs.map((chair) => camelcaseKeys(chair));
-
-    // キャッシュに保存
-    // cache.set(cacheKey, chairs);
 
     res.json({ chairs });
   } catch (e) {
@@ -391,7 +370,7 @@ app.post("/api/chair/buy/:id", async (req, res, next) => {
   }
 });
 
-app.get("/api/estate/search", cacheMiddleware, async (req, res, next) => {
+app.get("/api/estate/search", async (req, res, next) => {
   const searchQueries = [];
   const queryParams = [];
   const {
