@@ -92,6 +92,10 @@ app.post("/initialize", async (req, res, next) => {
         `mysql -h ${dbMasterInfo.host} -u ${dbMasterInfo.user} -p${dbMasterInfo.password} -P ${dbMasterInfo.port} ${dbMasterInfo.database} < ${execfile}`
       );
     }
+
+    // レプリケーションの遅延のため少し待つ
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
     res.json({
       language: "nodejs",
     });
