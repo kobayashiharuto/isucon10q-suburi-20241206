@@ -1,13 +1,13 @@
 "use strict";
 
-const tracer = require('dd-trace');
+// const tracer = require('dd-trace');
 
-tracer.init({
-    logInjection: true,
-    runtimeMetrics: true,
-    profiling: true,
-    service: 'isuumo',
-});
+// tracer.init({
+//     logInjection: true,
+//     runtimeMetrics: true,
+//     profiling: true,
+//     service: 'isuumo',
+// });
 
 const NodeCache = require("node-cache");
 const cache = new NodeCache({ stdTTL: 60 }); // TTL: 60秒
