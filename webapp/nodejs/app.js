@@ -617,8 +617,8 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
 
   const getChairConnection = promisify(chairDB.getConnection.bind(chairDB));
   const chairConnection = await getChairConnection();
-  const chairQuery = promisify(chairConnection.query.bind(connection));
-  
+  const chairQuery = promisify(chairConnection.query.bind(chairConnection));
+
   try {
     // 椅子情報を取得
     const [chair] = await chairQuery("SELECT * FROM chair WHERE id = ?", [id]);
