@@ -91,7 +91,6 @@ app.post("/initialize", async (req, res, next) => {
     const execfilesChair = dbChairfiles.map((file) => path.join(dbdir, file));
     for (const execfile of execfilesChair) {
       const exec_a = `mysql -h ${dbChairInfo.host} -u ${dbChairInfo.user} -p${dbChairInfo.password} -P ${dbChairInfo.port} ${dbChairInfo.database} < ${execfile}`
-      console.log(exec_a)
       await exec(
         exec_a
       );
@@ -104,7 +103,6 @@ app.post("/initialize", async (req, res, next) => {
     const execfilesEstate = dbEstatefiles.map((file) => path.join(dbdir, file));
     for (const execfile of execfilesEstate) {
       const exec_a = `mysql -h ${dbEstateInfo.host} -u ${dbEstateInfo.user} -p${dbEstateInfo.password} -P ${dbEstateInfo.port} ${dbEstateInfo.database} < ${execfile}`
-      console.log(exec_a)
       await exec(
         exec_a
       );
@@ -634,7 +632,6 @@ app.get("/api/recommended_estate/:id", async (req, res, next) => {
 
 
 app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
-  console.log("post chairQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   const getConnection = promisify(chairDB.getConnection.bind(chairDB));
   const connection = await getConnection();
   const beginTransaction = promisify(connection.beginTransaction.bind(connection));
@@ -661,16 +658,13 @@ app.post("/api/chair", upload.single("chairs"), async (req, res, next) => {
     res.json({ ok: true });
   } catch (e) {
     await rollback();
-    console.log('ERROR: QQQQQQQQQQQQQQQQ' + e)
     next(e);
   } finally {
     await connection.release();
-    console.log("DONE: post chairQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   }
 });
 
 app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
-  console.log("post estateQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   const getConnection = promisify(estateDB.getConnection.bind(estateDB));
   const connection = await getConnection();
   const beginTransaction = promisify(connection.beginTransaction.bind(connection));
@@ -697,14 +691,11 @@ app.post("/api/estate", upload.single("estates"), async (req, res, next) => {
     res.json({ ok: true });
   } catch (e) {
     await rollback();
-    console.log('ERROR: QQQQQQQQQQQQQQQQ' + e)
     next(e);
   } finally {
     await connection.release();
-    console.log("DONE: post estateQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Listening ${PORT}`);
 });
