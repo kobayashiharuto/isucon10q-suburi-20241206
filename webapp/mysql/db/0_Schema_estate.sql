@@ -2,7 +2,6 @@ DROP DATABASE IF EXISTS isuumo;
 CREATE DATABASE isuumo;
 
 DROP TABLE IF EXISTS isuumo.estate;
-DROP TABLE IF EXISTS isuumo.chair;
 
 CREATE TABLE isuumo.estate
 (
