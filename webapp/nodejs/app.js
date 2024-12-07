@@ -151,10 +151,10 @@ app.get("/api/chair/low_priced", async (req, res, next) => {
   const cacheKey = "low_priced_chair";
   const cachedData = cache.get(cacheKey);
 
-  if (cachedData) {
-    // キャッシュが存在する場合
-    return res.json({ chairs: cachedData });
-  }
+  // if (cachedData) {
+  //   // キャッシュが存在する場合
+  //   return res.json({ chairs: cachedData });
+  // }
 
   const getConnection = promisify(chairDB.getConnection.bind(chairDB));
   const connection = await getConnection();
@@ -168,7 +168,7 @@ app.get("/api/chair/low_priced", async (req, res, next) => {
     const chairs = cs.map((chair) => camelcaseKeys(chair));
 
     // キャッシュに保存
-    cache.set(cacheKey, chairs);
+    // cache.set(cacheKey, chairs);
 
     res.json({ chairs });
   } catch (e) {
