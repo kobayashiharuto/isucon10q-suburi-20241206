@@ -47,6 +47,7 @@ const exec = promisify(cp.exec);
 const chairSearchCondition = require("../fixture/chair_condition.json");
 const estateSearchCondition = require("../fixture/estate_condition.json");
 const e = require('express');
+const { connect } = require('http2');
 
 const PORT = process.env.PORT ?? 1323;
 const LIMIT = 20;
@@ -58,6 +59,7 @@ const dbEstateInfo = {
   user: process.env.MYSQL_ESTATE_USER ?? "isucon",
   password: process.env.MYSQL_ESTATE_PASS ?? "isucon",
   database: process.env.MYSQL_ESTATE_DBNAME ?? "isuumo",
+  connectionLimit: 100,
 };
 
 const dbChairInfo = {
@@ -66,6 +68,7 @@ const dbChairInfo = {
   user: process.env.MYSQL_CHAIR_USER ?? "isucon",
   password: process.env.MYSQL_CHAIR_PASS ?? "isucon",
   database: process.env.MYSQL_CHAIR_DBNAME ?? "isuumo",
+  connectionLimit: 100,
 };
 
 const app = express();
@@ -116,7 +119,7 @@ app.post("/initialize", async (req, res, next) => {
   }
 });
 
-app.get("/api/estate/low_priced", async (req, res, next) => {
+app.get("/api/estate/low_priced", cacheMiddleware, async (req, res, next) => {
   const getConnection = promisify(estateDB.getConnection.bind(estateDB));
   const connection = await getConnection();
   const query = promisify(connection.query.bind(connection));
@@ -136,7 +139,7 @@ app.get("/api/estate/low_priced", async (req, res, next) => {
   }
 });
 
-app.get("/api/chair/low_priced", async (req, res, next) => {
+app.get("/api/chair/low_priced", cacheMiddleware, async (req, res, next) => {
 
   const getConnection = promisify(chairDB.getConnection.bind(chairDB));
   const connection = await getConnection();
@@ -370,7 +373,7 @@ app.post("/api/chair/buy/:id", async (req, res, next) => {
   }
 });
 
-app.get("/api/estate/search", async (req, res, next) => {
+app.get("/api/estate/search", cacheMiddleware, async (req, res, next) => {
   const searchQueries = [];
   const queryParams = [];
   const {
