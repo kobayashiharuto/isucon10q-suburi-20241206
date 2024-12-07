@@ -20,7 +20,6 @@ CREATE TABLE isuumo.estate
     popularity  INTEGER             NOT NULL,
     location    POINT GENERATED ALWAYS AS (Point(longitude, latitude)) STORED NOT NULL,
     INDEX idx_popularity (popularity),
-    INDEX idx_popularity (popularity),
     SPATIAL INDEX idx_location (location)
 );
 
