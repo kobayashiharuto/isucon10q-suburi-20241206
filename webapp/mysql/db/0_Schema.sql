@@ -50,5 +50,3 @@ BEGIN
 END $$
 
 DELIMITER ;
-
-GRANT EXECUTE ON PROCEDURE isuumo.explain_statement TO datadog@'%';
